@@ -93,6 +93,7 @@ func (h *GraylogHandler) Handle(ctx context.Context, record slog.Record) error {
 	// non-blocking
 	go func() {
 		err := (*h.option.Writer).WriteMessage(msg)
+		fmt.Printf("%+v", msg)
 		if err != nil {
 			panic(err)
 		}
