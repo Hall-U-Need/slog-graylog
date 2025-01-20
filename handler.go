@@ -8,8 +8,8 @@ import (
 
 	"log/slog"
 
-	"github.com/Graylog2/go-gelf/gelf"
 	slogcommon "github.com/samber/slog-common"
+	"gopkg.in/go-logs/gelf.v3/gelf"
 )
 
 type Option struct {
@@ -17,8 +17,8 @@ type Option struct {
 	Level slog.Leveler
 
 	// connection to graylog
-	Writer *gelf.Writer
-
+	Writer     *gelf.Writer
+	GelfWriter *gelf.GelfWriter
 	// optional: customize json payload builder
 	Converter Converter
 	// optional: fetch attributes from context
@@ -40,8 +40,8 @@ func (o Option) NewGraylogHandler() slog.Handler {
 	if o.Writer == nil {
 		panic("missing graylog connections")
 	}
-	if o.Writer.Facility == "" {
-		o.Writer.Facility = fmt.Sprintf("%s/%s", name, version)
+	if o.GelfWriter.Facility == "" {
+		o.GelfWriter.Facility = fmt.Sprintf("%s/%s", name, version)
 	}
 
 	if o.Converter == nil {
@@ -86,13 +86,13 @@ func (h *GraylogHandler) Handle(ctx context.Context, record slog.Record) error {
 		Full:     strings.TrimSpace(record.Message),
 		TimeUnix: float64(record.Time.UnixNano()) / 1e9,
 		Level:    LogLevels[record.Level],
-		Facility: h.option.Writer.Facility,
+		Facility: h.option.GelfWriter.Facility,
 		Extra:    extra,
 	}
 
 	// non-blocking
 	go func() {
-		_ = h.option.Writer.WriteMessage(msg)
+		(*h.option.Writer).WriteMessage(msg)
 	}()
 
 	return nil
