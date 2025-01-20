@@ -92,7 +92,10 @@ func (h *GraylogHandler) Handle(ctx context.Context, record slog.Record) error {
 
 	// non-blocking
 	go func() {
-		(*h.option.Writer).WriteMessage(msg)
+		err := (*h.option.Writer).WriteMessage(msg)
+		if err != nil {
+			panic(err)
+		}
 	}()
 
 	return nil
